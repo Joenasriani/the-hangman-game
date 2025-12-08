@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>The Enchanted Hangman</title>
+    <meta name="description" content="The Enchanted Hangman - Immersive VR/AR Word Game">
+    <!-- Import A-Frame Library -->
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <!-- Import A-Frame Environment Component -->
+    <script src="https://unpkg.com/aframe-environment-component@1.3.4/dist/aframe-environment-component.min.js"></script>
+    <!-- Import A-Frame Extras for enhanced controls -->
+    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
+    <!-- Import Super-Hands for VR Hand Interaction -->
+    <script src="https://unpkg.com/super-hands@3.0.1/dist/super-hands.min.js"></script>
+  </head>
+  <body>
+    <a-scene 
+      game-manager 
+      vr-mode-ui="enabled: true" 
+      background="color: #001122"
+      fog="type: exponential; color: #001122; density: 0.0025"
+    >
+      
+      <!-- ASSETS -->
+      <a-assets>
+        <!-- Enhanced Sound Library -->
+        <audio id="ambient-forest" src="https://cdn.glitch.global/0b8e9f4a-1e07-4e9e-a8af-101851b6c0ba/forest-ambience.mp3?v=1730030020889" preload="auto" loop></audio>
+        <audio id="key-click" src="https://cdn.glitch.global/0b8e9f4a-1e07-4e9e-a8af-101851b6c0ba/mechanical-click.mp3?v=1730030025889" preload="auto"></audio>
+        <audio id="key-hover" src="https://cdn.glitch.global/0b8e9f4a-1e07-4e9e-a8af-101851b6c0ba/soft-hover.mp3?v=1730030030889" preload="auto"></audio>
+        <audio id="correct-guess" src="https://cdn.glitch.global/0b8e9f4a-1e07-4e9e-a8af-101851b6c0ba/correct-chime.mp3?v=1730030035889" preload="auto"></audio>
+        <audio id="wrong-guess" src="https://cdn.glitch.global/0b8e9f4a-1e07-4e9e-a8af-101851b6c0ba/wrong-thud.mp3?v=1730030040889" preload="auto"></audio>
+        <audio id="victory" src="https://cdn.glitch.global/0b8e9f4a-1e07-4e9e-a8af-101851b6c0ba/victory-fanfare.mp3?v=1730030045889" preload="auto"></audio>
+        <audio id="defeat" src="https://cdn.glitch.global/0b8e9f4a-1e07-4e9e-a8af-101851b6c0ba/defeat-bell.mp3?v=1730030050889" preload="auto"></audio>
+        <audio id="construction" src="https://cdn.glitch.global/0b8e9f4a-1e07-4e9e-a8af-101851b6c0ba/wood-construct.mp3?v=1730030055889" preload="auto"></audio>
+        
+        <!-- Enhanced Materials and Mixins -->
+        <a-mixin id="wood-material" 
+          material="color: #8B4513; roughness: 0.8; metalness: 0.1; normalTextureRepeat: 2 2"
+          geometry="primitive: box"
+        ></a-mixin>
+        
+        <a-mixin id="rope-material" 
+          material="color: #2B2B2B; roughness: 0.9; metalness: 0.0"
+          geometry="primitive: cylinder"
+        ></a-mixin>
+        
+        <a-mixin id="key-material" 
+          material="color: #2C3E50; roughness: 0.3; metalness: 0.8; emissive: #0A0A0A; emissiveIntensity: 0.1"
+          geometry="primitive: box; width: 0.35; height: 0.35; depth: 0.15"
+        ></a-mixin>
+      </a-assets>
+
+      <!-- LIGHTING SYSTEM -->
+      <a-light type="ambient" color="#404080" intensity="0.4"></a-light>
+      <a-light type="directional" color="#FFA500" position="5 10 5" intensity="0.6" 
+        light="castShadow: true; shadowMapHeight: 2048; shadowMapWidth: 2048; shadowCameraFar: 50; shadowCameraNear: 0.1"></a-light>
+      <a-light type="point" color="#FF6B35" position="0 4 -2" intensity="0.3" distance="15"></a-light>
+
+      <!-- ENCHANTED ENVIRONMENT -->
+      
+      <!-- Mystical Ground -->
+      <a-plane position="0 0 0" rotation="-90 0 0" width="50" height="50" 
+        material="color: #1A2F1A; roughness: 0.9; normalTextureRepeat: 10 10"
+        shadow="receive: true"
+      ></a-plane>
+      
+      <!-- Enchanted Trees with Glow -->
+      <a-entity position="-8 0 -12">
+        <a-cone color="#0F4F0F" radius-bottom="0.8" radius-top="0" height="5" position="0 2.5 0"
+          material="roughness: 0.8; emissive: #002200; emissiveIntensity: 0.1"
+          animation="property: rotation; from: 0 0 -2; to: 0 0 2; dur: 4000; dir: alternate; loop: true; easing: easeInOutSine"
+        ></a-cone>
+        <a-cylinder color="#4A2C17" radius="0.2" height="2" position="0 1 0"
+          material="roughness: 0.9"
+        ></a-cylinder>
+        <!-- Mystical Glow -->
+        <a-sphere position="0 4 0" radius="2" 
+          material="color: #00FF88; transparent: true; opacity: 0.05"
+          animation="property: scale; from: 0.8 0.8 0.8; to: 1.2 1.2 1.2; dur: 3000; dir: alternate; loop: true"
+        ></a-sphere>
+      </a-entity>
+      
+      <a-entity position="10 0 -15">
+        <a-cone color="#1A5F1A" radius-bottom="1.0" radius-top="0" height="6" position="0 3 0"
+          material="roughness: 0.8; emissive: #003300; emissiveIntensity: 0.1"
+          animation="property: rotation; from: 0 0 1.5; to: 0 0 -1.5; dur: 5000; dir: alternate; loop: true; easing: easeInOutSine"
+        ></a-cone>
+        <a-cylinder color="#4A2C17" radius="0.25" height="2.5" position="0 1.25 0"
+          material="roughness: 0.9"
+        ></a-cylinder>
+        <!-- Mystical Glow -->
+        <a-sphere position="0 5 0" radius="2.5" 
+          material="color: #0088FF; transparent: true; opacity: 0.05"
+          animation="property: scale; from: 0.9 0.9 0.9; to: 1.1 1.1 1.1; dur: 4000; dir: alternate; loop: true"
+        ></a-sphere>
+      </a-entity>
+      
+      <!-- Floating Mystical Orbs -->
+      <a-sphere position="5 3 -8" radius="0.1" 
+        material="color: #FFD700; emissive: #FFD700; emissiveIntensity: 0.8; transparent: true; opacity: 0.8"
+        animation="property: position; from: 5 3 -8; to: 5 5 -8; dur: 3000; dir: alternate; loop: true; easing: easeInOutSine"
+      ></a-sphere>
+      
+      <a-sphere position="-6 2.5 -10" radius="0.08" 
+        material="color: #FF69B4; emissive: #FF69B4; emissiveIntensity: 0.8; transparent: true; opacity: 0.8"
+        animation="property: position; from: -6 2.5 -10; to: -6 4 -10; dur: 4000; dir: alternate; loop: true; easing: easeInOutSine"
+      ></a-sphere>
+
+      <!-- Enchanted Rocks with Runes -->
+      <a-dodecahedron position="-4 0.3 -6" radius="0.6" 
+        material="color: #555577; roughness: 0.7; emissive: #111133; emissiveIntensity: 0.2"
+        animation="property: rotation; from: 0 0 0; to: 0 360 0; dur: 20000; loop: true"
+      ></a-dodecahedron>
+      
+      <a-dodecahedron position="7 0.4 -9" radius="0.8" 
+        material="color: #666688; roughness: 0.7; emissive: #222244; emissiveIntensity: 0.2"
+        animation="property: rotation; from: 0 0 0; to: 0 -360 0; dur: 25000; loop: true"
+      ></a-dodecahedron>
+
+      <!-- PLAYER RIG WITH ENHANCED CONTROLS -->
+      <a-entity id="playerRig" 
+        position="0 0 3" 
+        movement-controls="constrainToNavMesh: false; speed: 0.3"
+        look-controls="pointerLockEnabled: true"
+      >
+        <!-- VR Camera with Enhanced Cursor -->
+        <a-camera position="0 1.6 0" 
+          wasd-controls="acceleration: 20" 
+          look-controls="reverseMouseDrag: true"
+        >
+          <!-- Enhanced Cursor with Glow -->
+          <a-cursor 
+            id="main-cursor"
+            color="#00FFFF"
+            raycaster="objects: .clickable; far: 20"
+            material="emissive: #00FFFF; emissiveIntensity: 0.5; transparent: true; opacity: 0.8"
+            animation__glow="property: scale; from: 1 1 1; to: 1.2 1.2 1.2; dur: 1000; dir: alternate; loop: true"
+            animation__pulse="property: material.emissiveIntensity; from: 0.3; to: 0.8; dur: 800; dir: alternate; loop: true"
+          ></a-cursor>
+        </a-camera>
+        
+        <!-- VR Hand Controllers -->
+        <a-entity id="left-hand" 
+          hand-controls="hand: left; handModelStyle: lowPoly; color: #15AABF"
+          super-hands="colliderEvent: raycaster-intersection; colliderEventProperty: els; colliderEndEvent: raycaster-intersection-cleared; colliderEndEventProperty: clearedEls"
+          raycaster="objects: .clickable; far: 10"
+          laser-controls="hand: left"
+        ></a-entity>
+        
+        <a-entity id="right-hand" 
+          hand-controls="hand: right; handModelStyle: lowPoly; color: #15AABF"
+          super-hands="colliderEvent: raycaster-intersection; colliderEventProperty: els; colliderEndEvent: raycaster-intersection-cleared; colliderEndEventProperty: clearedEls"
+          raycaster="objects: .clickable; far: 10"
+          laser-controls="hand: right"
+        ></a-entity>
+        
+        <!-- VR Controllers (Oculus/HTC Vive) -->
+        <a-entity id="left-controller" 
+          oculus-touch-controls="hand: left"
+          vive-controls="hand: left" 
+          raycaster="objects: .clickable; far: 10"
+          laser-controls="hand: left"
+        ></a-entity>
+        
+        <a-entity id="right-controller" 
+          oculus-touch-controls="hand: right"
+          vive-controls="hand: right" 
+          raycaster="objects: .clickable; far: 10"
+          laser-controls="hand: right"
+        ></a-entity>
+      </a-entity>
+
+      <!-- MOBILE TOUCH CONTROLS UI -->
+      <a-entity id="mobile-controls" visible="false" position="0 0 0">
+        <!-- Virtual Joystick for Movement -->
+        <a-entity id="movement-joystick" 
+          position="-4 -2 -5"
+          geometry="primitive: circle; radius: 0.8" 
+          material="color: #333333; transparent: true; opacity: 0.6"
+          class="clickable mobile-joystick"
+        >
+          <!-- Joystick Handle -->
+          <a-entity id="joystick-handle" 
+            position="0 0 0.02"
+            geometry="primitive: circle; radius: 0.3" 
+            material="color: #00AAFF; transparent: true; opacity: 0.8"
+          ></a-entity>
+          
+          <a-text value="MOVE" position="0 -1.2 0" align="center" color="#FFF" width="3"></a-text>
+        </a-entity>
+        
+        <!-- Look Around Pad -->
+        <a-entity id="look-pad" 
+          position="4 -2 -5"
+          geometry="primitive: circle; radius: 0.8" 
+          material="color: #333333; transparent: true; opacity: 0.6"
+          class="clickable mobile-look"
+        >
+          <a-text value="LOOK" position="0 -1.2 0" align="center" color="#FFF" width="3"></a-text>
+        </a-entity>
+      </a-entity>
+
+      <!-- ENHANCED GAME UI -->
+      
+      <!-- Game Title -->
+      <a-text
+        id="game-title"
+        value="THE ENCHANTED HANGMAN"
+        align="center"
+        width="8"
+        position="0 4.2 -3"
+        color="#FFD700"
+        material="emissive: #FFD700; emissiveIntensity: 0.3"
+        animation__glow="property: material.emissiveIntensity; from: 0.2; to: 0.6; dur: 2000; dir: alternate; loop: true"
+      ></a-text>
+      
+      <!-- Word Display with Enhanced Style -->
+      <a-entity 
+        id="word-display" 
+        position="0 2.8 -3"
+        visible="false"
+      ></a-entity>
+      
+      <!-- Status Message -->
+      <a-text
+        id="status-message"
+        value="Welcome to The Enchanted Hangman!"
+        align="center"
+        width="6"
+        position="0 3.4 -3"
+        color="#FFFFFF"
+        material="emissive: #FFFFFF; emissiveIntensity: 0.1"
+      ></a-text>
+      
+      <!-- Enhanced Start/Reset Button -->
+      <a-entity 
+        id="start-reset-button-container" 
+        position="0 2.0 -2.8"
+      >
+        <!-- Larger Invisible Hitbox for Better Interaction -->
+        <a-box
+          id="start-reset-hitbox"
+          class="clickable"
+          width="3.0"
+          height="0.8"
+          depth="0.3"
+          color="#FF6B35"
+          material="transparent: true; opacity: 0"
+          position="0 0 0"
+        ></a-box>
+        
+        <!-- Visual Button -->
+        <a-box
+          id="start-reset-button"
+          width="2.5"
+          height="0.6"
+          depth="0.2"
+          color="#FF6B35"
+          material="roughness: 0.3; metalness: 0.7; emissive: #FF6B35; emissiveIntensity: 0.2"
+          animation__hoveron="property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200"
+          animation__hoveroff="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200"
+          animation__clickscale="property: scale; to: 1.2 1.2 1.2; startEvents: mousedown; dur: 100; dir: alternate; loop: 2"
+          shadow="cast: true"
+        >
+          <!-- Glowing Border -->
+          <a-ring 
+            position="0 0 0.11" 
+            radius-inner="1.2" 
+            radius-outer="1.3" 
+            material="color: #FFD700; emissive: #FFD700; emissiveIntensity: 0.5; transparent: true; opacity: 0.8"
+            animation__glow="property: material.emissiveIntensity; from: 0.3; to: 0.8; dur: 1500; dir: alternate; loop: true"
+          ></a-ring>
+          
+          <a-text
+            id="start-reset-button-text"
+            value="START THE ENCHANTMENT"
+            align="center"
+            width="4"
+            position="0 0 0.11"
+            color="#FFFFFF"
+            material="emissive: #FFFFFF; emissiveIntensity: 0.3"
+          ></a-text>
+        </a-box>
+      </a-entity>
+      
+      <!-- ENHANCED MECHANICAL KEYBOARD -->
+      <a-entity 
+        id="keyboard" 
+        position="0 1.2 -2.8"
+        scale="1.5 1.5 1.5"
+        visible="false"
+      >
+        <!-- Keyboard Base Frame -->
+        <a-box 
+          position="0 -0.2 0" 
+          width="6.5" 
+          height="0.15" 
+          depth="2.8" 
+          color="#1A1A1A"
+          material="roughness: 0.4; metalness: 0.8"
+          shadow="cast: true"
+        ></a-box>
+      </a-entity>
+      
+      <!-- ENHANCED ANIMATED HANGMAN STRUCTURE -->
+      <a-entity id="hangman-structure" position="0 4.5 -4" scale="1.2 1.2 1.2">
+        
+        <!-- Enhanced Base with Wood Grain -->
+        <a-box id="hm-base" 
+          position="0 0.1 0" 
+          width="3.0" 
+          height="0.3" 
+          depth="1.5" 
+          color="#654321"
+          material="roughness: 0.9; metalness: 0.1"
+          visible="false"
+          shadow="cast: true"
+          animation__construct="property: scale; from: 0 0 0; to: 1 1 1; dur: 800; easing: easeOutElastic"
+        ></a-box>
+        
+        <!-- Enhanced Post - Taller and More Detailed -->
+        <a-cylinder id="hm-post" 
+          position="1.2 1.5 0" 
+          radius="0.15" 
+          height="2.8" 
+          color="#654321"
+          material="roughness: 0.9; metalness: 0.1"
+          visible="false"
+          shadow="cast: true"
+          animation__construct="property: scale; from: 1 0 1; to: 1 1 1; dur: 1000; easing: easeOutBounce"
+        ></a-cylinder>
+        
+        <!-- Enhanced Beam - Longer as Requested -->
+        <a-box id="hm-beam" 
+          position="-0.15 2.8 0" 
+          width="2.5" 
+          height="0.25" 
+          depth="0.25" 
+          color="#654321"
+          material="roughness: 0.9; metalness: 0.1"
+          visible="false"
+          shadow="cast: true"
+          animation__construct="property: scale; from: 0 1 1; to: 1 1 1; dur: 1200; easing: easeOutElastic"
+        ></a-box>
+        
+        <!-- Enhanced Black Rope as Requested -->
+        <a-cylinder id="hm-rope" 
+          position="-1.2 2.4 0" 
+          radius="0.05" 
+          height="0.8" 
+          color="#000000"
+          material="roughness: 1.0; metalness: 0.0"
+          visible="false"
+          shadow="cast: true"
+          animation__construct="property: scale; from: 1 0 1; to: 1 1 1; dur: 600; easing: easeOutBounce"
+          animation__sway="property: rotation; from: 0 0 -5; to: 0 0 5; dur: 3000; dir: alternate; loop: true; easing: easeInOutSine"
+        ></a-cylinder>
+        
+        <!-- Noose Loop -->
+        <a-torus id="hm-noose" 
+          position="-1.2 1.9 0" 
+          radius="0.15" 
+          radius-tubular="0.03" 
+          color="#000000"
+          material="roughness: 1.0; metalness: 0.0"
+          visible="false"
+          shadow="cast: true"
+          animation__construct="property: scale; from: 0 0 0; to: 1 1 1; dur: 500; easing: easeOutBounce"
+        ></a-torus>
+        
+        <!-- Enhanced Head -->
+        <a-sphere id="hm-head" 
+          position="-1.2 1.6 0" 
+          radius="0.18" 
+          color="#FDBCB4"
+          material="roughness: 0.8; metalness: 0.0"
+          visible="false"
+          shadow="cast: true"
+          animation__construct="property: scale; from: 0 0 0; to: 1 1 1; dur: 600; easing: easeOutElastic"
+        ></a-sphere>
+        
+        <!-- Enhanced Body -->
+        <a-cylinder id="hm-body" 
+          position="-1.2 1.15 0" 
+          radius="0.12" 
+          height="0.7" 
+          color="#8B4513"
+          material="roughness: 0.8; metalness: 0.0"
+          visible="false"
+          shadow="cast: true"
+          animation__construct="property: scale; from: 1 0 1; to: 1 1 1; dur: 700; easing: easeOutBounce"
+        ></a-cylinder>
+        
+        <!-- Left Arm -->
+        <a-cylinder id="hm-left-arm" 
+          position="-1.35 1.25 0" 
+          radius="0.05" 
+          height="0.4" 
+          rotation="0 0 -45"
+          color="#FDBCB4"
+          material="roughness: 0.8; metalness: 0.0"
+          visible="false"
+          shadow="cast: true"
+          animation__construct="property: scale; from: 1 0 1; to: 1 1 1; dur: 500; easing: easeOutElastic"
+        ></a-cylinder>
+        
+        <!-- Right Arm -->
+        <a-cylinder id="hm-right-arm" 
+          position="-1.05 1.25 0" 
+          radius="0.05" 
+          height="0.4" 
+          rotation="0 0 45"
+          color="#FDBCB4"
+          material="roughness: 0.8; metalness: 0.0"
+          visible="false"
+          shadow="cast: true"
+          animation__construct="property: scale; from: 1 0 1; to: 1 1 1; dur: 500; easing: easeOutElastic"
+        ></a-cylinder>
+        
+        <!-- Left Leg -->
+        <a-cylinder id="hm-left-leg" 
+          position="-1.28 0.65 0" 
+          radius="0.06" 
+          height="0.5" 
+          rotation="0 0 -20"
+          color="#4169E1"
+          material="roughness: 0.8; metalness: 0.0"
+          visible="false"
+          shadow="cast: true"
+          animation__construct="property: scale; from: 1 0 1; to: 1 1 1; dur: 600; easing: easeOutBounce"
+        ></a-cylinder>
+        
+        <!-- Right Leg -->
+        <a-cylinder id="hm-right-leg" 
+          position="-1.12 0.65 0" 
+          radius="0.06" 
+          height="0.5" 
+          rotation="0 0 20"
+          color="#4169E1"
+          material="roughness: 0.8; metalness: 0.0"
+          visible="false"
+          shadow="cast: true"
+          animation__construct="property: scale; from: 1 0 1; to: 1 1 1; dur: 600; easing: easeOutBounce"
+        ></a-cylinder>
+        
+      </a-entity>
+
+      <!-- ENHANCED 3D AUDIO SYSTEM -->
+      <a-sound id="ambient-forest-sound" src="#ambient-forest" position="0 2 -10" volume="0.3" autoplay="true" loop="true"></a-sound>
+      <a-sound id="key-click-sound" src="#key-click" position="0 1.2 -2.8" volume="0.6"></a-sound>
+      <a-sound id="key-hover-sound" src="#key-hover" position="0 1.2 -2.8" volume="0.3"></a-sound>
+      <a-sound id="correct-guess-sound" src="#correct-guess" position="0 2.8 -3" volume="0.7"></a-sound>
+      <a-sound id="wrong-guess-sound" src="#wrong-guess" position="0 4.5 -4" volume="0.8"></a-sound>
+      <a-sound id="victory-sound" src="#victory" position="0 2.8 -3" volume="0.9"></a-sound>
+      <a-sound id="defeat-sound" src="#defeat" position="0 4.5 -4" volume="0.9"></a-sound>
+      <a-sound id="construction-sound" src="#construction" position="0 4.5 -4" volume="0.7"></a-sound>
+
+    </a-scene>
+
+    <script>
+    /*
+     * Enhanced Mobile and VR Controls
+     */
+    AFRAME.registerComponent('mobile-movement', {
+      init: function () {
+        this.playerRig = document.getElementById('playerRig');
+        this.mobileControls = document.getElementById('mobile-controls');
+        this.joystick = document.getElementById('movement-joystick');
+        this.joystickHandle = document.getElementById('joystick-handle');
+        this.lookPad = document.getElementById('look-pad');
+        
+        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        this.isVR = false;
+        
+        this.moveVector = new THREE.Vector3(0, 0, 0);
+        this.lookDelta = new THREE.Vector2(0, 0);
+        
+        this.isDragging = false;
+        this.isLooking = false;
+        this.startPos = {x: 0, y: 0};
+        
+        // Show mobile controls on mobile devices
+        if (this.isMobile) {
+          this.mobileControls.setAttribute('visible', 'true');
+          this.setupMobileControls();
+        }
+        
+        // Listen for VR mode changes
+        this.el.addEventListener('enter-vr', () => {
+          this.isVR = true;
+          this.mobileControls.setAttribute('visible', 'false');
+        });
+        
+        this.el.addEventListener('exit-vr', () => {
+          this.isVR = false;
+          if (this.isMobile) {
+            this.mobileControls.setAttribute('visible', 'true');
+          }
+        });
+      },
+      
+      setupMobileControls: function () {
+        // Movement Joystick
+        this.joystick.addEventListener('mousedown', (evt) => {
+          this.isDragging = true;
+          this.startPos = this.getScreenPosition(evt);
+        });
+        
+        this.joystick.addEventListener('touchstart', (evt) => {
+          evt.preventDefault();
+          this.isDragging = true;
+          this.startPos = this.getTouchPosition(evt);
+        });
+        
+        // Look Pad
+        this.lookPad.addEventListener('mousedown', (evt) => {
+          this.isLooking = true;
+          this.startPos = this.getScreenPosition(evt);
+        });
+        
+        this.lookPad.addEventListener('touchstart', (evt) => {
+          evt.preventDefault();
+          this.isLooking = true;
+          this.startPos = this.getTouchPosition(evt);
+        });
+        
+        // Global move events
+        document.addEventListener('mousemove', this.onMove.bind(this));
+        document.addEventListener('touchmove', this.onMove.bind(this));
+        
+        document.addEventListener('mouseup', this.onEnd.bind(this));
+        document.addEventListener('touchend', this.onEnd.bind(this));
+      },
+      
+      getScreenPosition: function (evt) {
+        return {x: evt.clientX, y: evt.clientY};
+      },
+      
+      getTouchPosition: function (evt) {
+        const touch = evt.touches[0] || evt.changedTouches[0];
+        return {x: touch.clientX, y: touch.clientY};
+      },
+      
+      onMove: function (evt) {
+        if (!this.isDragging && !this.isLooking) return;
+        
+        const pos = evt.type.includes('touch') ? this.getTouchPosition(evt) : this.getScreenPosition(evt);
+        const deltaX = pos.x - this.startPos.x;
+        const deltaY = pos.y - this.startPos.y;
+        
+        if (this.isDragging) {
+          // Update joystick handle position
+          const maxDistance = 40; // pixels
+          const distance = Math.min(Math.sqrt(deltaX * deltaX + deltaY * deltaY), maxDistance);
+          const angle = Math.atan2(deltaY, deltaX);
+          
+          const handleX = Math.cos(angle) * (distance / maxDistance) * 0.5;
+          const handleZ = Math.sin(angle) * (distance / maxDistance) * 0.5;
+          
+          this.joystickHandle.setAttribute('position', `${handleX} 0 ${handleZ}`);
+          
+          // Update movement vector
+          this.moveVector.set(
+            Math.cos(angle) * (distance / maxDistance) * 0.1,
+            0,
+            Math.sin(angle) * (distance / maxDistance) * 0.1
+          );
+        }
+        
+        if (this.isLooking) {
+          // Update look rotation
+          this.lookDelta.set(deltaX * 0.002, deltaY * 0.002);
+          
+          const camera = this.playerRig.querySelector('a-camera');
+          const currentRotation = camera.getAttribute('rotation');
+          
+          camera.setAttribute('rotation', {
+            x: Math.max(-90, Math.min(90, currentRotation.x - this.lookDelta.y * 57.2958)), // Convert to degrees
+            y: currentRotation.y - this.lookDelta.x * 57.2958,
+            z: currentRotation.z
+          });
+        }
+      },
+      
+      onEnd: function (evt) {
+        if (this.isDragging) {
+          this.isDragging = false;
+          this.joystickHandle.setAttribute('position', '0 0 0');
+          this.moveVector.set(0, 0, 0);
+        }
+        
+        if (this.isLooking) {
+          this.isLooking = false;
+          this.lookDelta.set(0, 0);
+        }
+      },
+      
+      tick: function () {
+        if (this.isMobile && !this.isVR && this.moveVector.length() > 0) {
+          const currentPosition = this.playerRig.getAttribute('position');
+          const newPosition = {
+            x: currentPosition.x + this.moveVector.x,
+            y: currentPosition.y,
+            z: currentPosition.z + this.moveVector.z
+          };
+          this.playerRig.setAttribute('position', newPosition);
+        }
+      }
+    });
+
+    /*
+     * Enhanced Game Manager with VR Support
+     */
+    AFRAME.registerComponent('game-manager', {
+      schema: {},
+
+      init: function () {
+        // Enhanced Word List
+        this.wordList = [
+          // VR/AR Terms
+          'WEBXR', 'AFRAME', 'VIRTUAL', 'REALITY', 'AUGMENTED', 'METAVERSE', 'QUEST', 'IMMERSIVE',
+          'HEADSET', 'CONTROLLER', 'HAPTIC', 'TRACKING', 'SPATIAL', 'HOLOGRAM', 'AVATAR',
+          
+          // Tech Terms
+          'JAVASCRIPT', 'BROWSER', 'INTERNET', 'DEVELOPER', 'COMPONENT', 'ENTITY', 'SYSTEM',
+          'GITHUB', 'CODING', 'PROGRAM', 'ALGORITHM', 'DATABASE', 'NETWORK', 'PROTOCOL',
+          
+          // Gaming Terms
+          'HANGMAN', 'PUZZLE', 'ADVENTURE', 'FANTASY', 'MAGIC', 'ENCHANTED', 'MYSTICAL',
+          'WIZARD', 'SPELL', 'POTION', 'CRYSTAL', 'DRAGON', 'KNIGHT', 'CASTLE',
+          
+          // Modern Tech
+          'ARTIFICIAL', 'INTELLIGENCE', 'MACHINE', 'LEARNING', 'BLOCKCHAIN', 'QUANTUM',
+          'CYBERPUNK', 'ROBOTICS', 'AUTOMATION', 'INNOVATION', 'DIGITAL', 'CLOUD'
+        ];
+        
+        // Game State
+        this.secretWord = '';
+        this.guessedLetters = [];
+        this.incorrectGuesses = 0;
+        this.maxGuesses = 10; // Full hangman figure
+        this.gameActive = false;
+        
+        // UI Elements
+        this.wordDisplayEl = document.getElementById('word-display');
+        this.keyboardEl = document.getElementById('keyboard');
+        this.statusMessageEl = document.getElementById('status-message');
+        this.resetButtonContainerEl = document.getElementById('start-reset-button-container');
+        this.resetButtonHitboxEl = document.getElementById('start-reset-hitbox');
+        this.resetButtonEl = document.getElementById('start-reset-button');
+        this.resetButtonTextEl = document.getElementById('start-reset-button-text');
+        
+        // Audio Elements
+        this.sounds = {
+          keyClick: document.getElementById('key-click-sound'),
+          keyHover: document.getElementById('key-hover-sound'),
+          correctGuess: document.getElementById('correct-guess-sound'),
+          wrongGuess: document.getElementById('wrong-guess-sound'),
+          victory: document.getElementById('victory-sound'),
+          defeat: document.getElementById('defeat-sound'),
+          construction: document.getElementById('construction-sound'),
+          ambient: document.getElementById('ambient-forest-sound')
+        };
+        
+        // Hangman Parts Array (in construction order)
+        this.hangmanParts = [
+          document.getElementById('hm-base'),      // 1
+          document.getElementById('hm-post'),      // 2
+          document.getElementById('hm-beam'),      // 3
+          document.getElementById('hm-rope'),      // 4
+          document.getElementById('hm-noose'),     // 5
+          document.getElementById('hm-head'),      // 6
+          document.getElementById('hm-body'),      // 7
+          document.getElementById('hm-left-arm'),  // 8
+          document.getElementById('hm-right-arm'), // 9
+          document.getElementById('hm-left-leg'),  // 10
+          document.getElementById('hm-right-leg')  // 11 (extra for safety)
+        ];
+        
+        // Initialize Mobile Controls
+        this.el.setAttribute('mobile-movement', '');
+        
+        // Setup
+        this.createEnhancedKeyboard();
+        this.hideAllHangmanParts();
+        this.setupEventListeners();
+        this.updateGameState('welcome');
+      },
+      
+      setupEventListeners: function () {
+        // Button Events
+        this.resetButtonHitboxEl.addEventListener('click', this.startGame.bind(this));
+        this.resetButtonEl.addEventListener('click', this.startGame.bind(this));
+        
+        // Keyboard Events
+        this.keyboardEl.addEventListener('click', this.handleKeyboardClick.bind(this));
+        
+        // VR Hand Events
+        this.el.addEventListener('hand-click', this.handleVRInteraction.bind(this));
+        this.el.addEventListener('controllerconnected', this.onControllerConnected.bind(this));
+      },
+      
+      onControllerConnected: function (evt) {
+        console.log('VR Controller connected:', evt.detail.name);
+        // Additional VR-specific setup can go here
+      },
+      
+      handleVRInteraction: function (evt) {
+        if (!this.gameActive) return;
+        
+        const intersectedEl = evt.detail.intersectedEl;
+        if (intersectedEl && intersectedEl.classList.contains('keyboard-button')) {
+          this.processKeyPress(intersectedEl);
+        }
+      },
+      
+      createEnhancedKeyboard: function () {
+        const rows = [
+          'QWERTYUIOP',
+          'ASDFGHJKL', 
+          'ZXCVBNM'
+        ];
+        
+        let yPos = 0.6;
+        
+        rows.forEach((row, rowIndex) => {
+          const rowLength = row.length;
+          const keySpacing = 0.4;
+          const keySize = 0.35;
+          const xOffset = -(rowLength * keySpacing) / 2 + (keySpacing / 2);
+          
+          for (let i = 0; i < row.length; i++) {
+            const letter = row[i];
+            
+            // Create Enhanced Key Container
+            const keyContainer = document.createElement('a-entity');
+            keyContainer.setAttribute('position', `${xOffset + i * keySpacing} ${yPos} 0`);
+            
+            // Main Key Body
+            const keyButton = document.createElement('a-box');
+            keyButton.setAttribute('width', keySize);
+            keyButton.setAttribute('height', keySize);
+            keyButton.setAttribute('depth', '0.15');
+            keyButton.setAttribute('color', '#2C3E50');
+            keyButton.setAttribute('material', 'roughness: 0.3; metalness: 0.8; emissive: #1A1A1A; emissiveIntensity: 0.1');
+            keyButton.setAttribute('class', 'clickable keyboard-button hoverable grabbable');
+            keyButton.setAttribute('data-letter', letter);
+            keyButton.setAttribute('shadow', 'cast: true');
+            
+            // Enhanced Animations
+            keyButton.setAttribute('animation__hoveron', 'property: material.emissiveIntensity; to: 0.4; startEvents: mouseenter; dur: 200');
+            keyButton.setAttribute('animation__hoveroff', 'property: material.emissiveIntensity; to: 0.1; startEvents: mouseleave; dur: 200');
+            keyButton.setAttribute('animation__clickscale', 'property: scale; to: 0.9 0.9 0.9; startEvents: mousedown; dur: 100; dir: alternate; loop: 2');
+            keyButton.setAttribute('animation__clickglow', 'property: material.emissiveIntensity; to: 0.8; startEvents: mousedown; dur: 100; dir: alternate; loop: 2');
+            
+            // Key Letter Text
+            const keyText = document.createElement('a-text');
+            keyText.setAttribute('value', letter);
+            keyText.setAttribute('align', 'center');
+            keyText.setAttribute('width', '4');
+            keyText.setAttribute('color', '#FFFFFF');
+            keyText.setAttribute('position', '0 0 0.08');
+            keyText.setAttribute('material', 'emissive: #FFFFFF; emissiveIntensity: 0.2');
+            
+            // Key Border/Frame
+            const keyFrame = document.createElement('a-ring');
+            keyFrame.setAttribute('radius-inner', String(keySize * 0.7));
+            keyFrame.setAttribute('radius-outer', String(keySize * 0.75));
+            keyFrame.setAttribute('position', '0 0 0.076');
+            keyFrame.setAttribute('color', '#FFD700');
+            keyFrame.setAttribute('material', 'emissive: #FFD700; emissiveIntensity: 0.3; transparent: true; opacity: 0.8');
+            
+            // Assemble Key
+            keyButton.appendChild(keyText);
+            keyButton.appendChild(keyFrame);
+            keyContainer.appendChild(keyButton);
+            
+            this.keyboardEl.appendChild(keyContainer);
+          }
+          
+          yPos -= keySpacing;
+        });
+      },
+      
+      handleKeyboardClick: function (evt) {
+        if (!this.gameActive) return;
+        
+        const buttonEl = evt.target;
+        if (!buttonEl.classList.contains('keyboard-button')) return;
+        
+        this.processKeyPress(buttonEl);
+      },
+      
+      processKeyPress: function (buttonEl) {
+        const letter = buttonEl.getAttribute('data-letter');
+        if (this.guessedLetters.includes(letter)) return;
+        
+        this.guessedLetters.push(letter);
+        
+        // Play click sound
+        this.sounds.keyClick.components.sound.playSound();
+        
+        // Disable key visual
+        this.disableKey(buttonEl);
+        
+        // Process the guess
+        this.processGuess(letter);
+      },
+      
+      disableKey: function (buttonEl) {
+        buttonEl.setAttribute('color', '#444444');
+        buttonEl.setAttribute('material', 'roughness: 0.9; metalness: 0.2; emissive: #222222; emissiveIntensity: 0.05');
+        
+        // Remove hover animations
+        buttonEl.removeAttribute('animation__hoveron');
+        buttonEl.removeAttribute('animation__hoveroff');
+        buttonEl.removeAttribute('animation__clickscale');
+        buttonEl.removeAttribute('animation__clickglow');
+        
+        // Dim the text
+        const textEl = buttonEl.querySelector('a-text');
+        if (textEl) {
+          textEl.setAttribute('color', '#888888');
+          textEl.setAttribute('material', 'emissive: #888888; emissiveIntensity: 0.1');
+        }
+        
+        // Dim the frame
+        const frameEl = buttonEl.querySelector('a-ring');
+        if (frameEl) {
+          frameEl.setAttribute('material', 'emissive: #444444; emissiveIntensity: 0.1; transparent: true; opacity: 0.3');
+        }
+      },
+      
+      processGuess: function (letter) {
+        let correctGuess = false;
+        let wordComplete = true;
+        
+        // Check if letter is in the word
+        const letterElements = this.wordDisplayEl.children;
+        for (let i = 0; i < this.secretWord.length; i++) {
+          if (this.secretWord[i] === letter) {
+            // Reveal letter with animation
+            this.revealLetter(letterElements[i], letter, i);
+            correctGuess = true;
+          }
+          
+          // Check if word is complete
+          if (letterElements[i].getAttribute('value') === '_') {
+            wordComplete = false;
+          }
+        }
+        
+        if (correctGuess) {
+          this.sounds.correctGuess.components.sound.playSound();
+          this.updateGameState('correct');
+          
+          if (wordComplete) {
+            setTimeout(() => this.endGame(true), 500);
+          }
+        } else {
+          this.incorrectGuesses++;
+          this.sounds.wrongGuess.components.sound.playSound();
+          this.updateGameState('incorrect');
+          this.animateHangmanConstruction();
+          
+          if (this.incorrectGuesses >= this.maxGuesses) {
+            setTimeout(() => this.endGame(false), 1000);
+          }
+        }
+      },
+      
+      revealLetter: function (letterEl, letter, index) {
+        // Animate letter reveal
+        letterEl.setAttribute('value', letter);
+        letterEl.setAttribute('animation__reveal', 'property: scale; from: 0.5 0.5 0.5; to: 1.2 1.2 1.2; dur: 300; dir: alternate; loop: 2; easing: easeOutElastic');
+        letterEl.setAttribute('animation__glow', 'property: material.emissiveIntensity; from: 0.1; to: 0.6; dur: 300; dir: alternate; loop: 2');
+        
+        // Stagger reveal effect
+        setTimeout(() => {
+          letterEl.setAttribute('material', 'color: #00FF88; emissive: #00FF88; emissiveIntensity: 0.2');
+        }, index * 100);
+      },
+      
+      animateHangmanConstruction: function () {
+        const partIndex = this.incorrectGuesses - 1;
+        
+        if (partIndex >= 0 && partIndex < this.hangmanParts.length) {
+          const part = this.hangmanParts[partIndex];
+          
+          // Play construction sound
+          this.sounds.construction.components.sound.playSound();
+          
+          // Show part with animation
+          part.setAttribute('visible', 'true');
+          
+          // Trigger part-specific construction animation
+          const animationAttr = part.getAttribute('animation__construct');
+          if (animationAttr) {
+            part.setAttribute('animation__construct', animationAttr + '; startEvents: manual');
+            part.emit('manual');
+          }
+          
+          // Screen shake effect
+          this.createScreenShake();
+          
+          // Add dramatic lighting flash
+          this.createLightningFlash();
+        }
+      },
+      
+      createScreenShake: function () {
+        const camera = document.querySelector('a-camera');
+        const originalPos = camera.getAttribute('position');
+        
+        camera.setAttribute('animation__shake', `
+          property: position; 
+          from: ${originalPos.x} ${originalPos.y} ${originalPos.z}; 
+          to: ${originalPos.x + 0.02} ${originalPos.y + 0.01} ${originalPos.z}; 
+          dur: 50; 
+          dir: alternate; 
+          loop: 4; 
+          easing: easeInOutQuad
+        `);
+      },
+      
+      createLightningFlash: function () {
+        const flashLight = document.createElement('a-light');
+        flashLight.setAttribute('type', 'point');
+        flashLight.setAttribute('color', '#FF4444');
+        flashLight.setAttribute('intensity', '2');
+        flashLight.setAttribute('position', '0 4 -3');
+        flashLight.setAttribute('animation__flash', 'property: intensity; from: 2; to: 0; dur: 200; easing: easeOutQuad');
+        
+        this.el.appendChild(flashLight);
+        
+        setTimeout(() => {
+          this.el.removeChild(flashLight);
+        }, 300);
+      },
+      
+      startGame: function () {
+        this.gameActive = true;
+        this.guessedLetters = [];
+        this.incorrectGuesses = 0;
+        this.secretWord = this.wordList[Math.floor(Math.random() * this.wordList.length)];
+        
+        // UI Updates
+        this.updateGameState('playing');
+        this.resetButtonContainerEl.setAttribute('visible', 'false');
+        this.keyboardEl.setAttribute('visible', 'true');
+        this.wordDisplayEl.setAttribute('visible', 'true');
+        
+        // Reset game elements
+        this.resetKeyboard();
+        this.hideAllHangmanParts();
+        this.createWordDisplay();
+        
+        console.log('Game started! Secret word:', this.secretWord); // Debug
+      },
+      
+      createWordDisplay: function () {
+        // Clear existing display
+        while (this.wordDisplayEl.firstChild) {
+          this.wordDisplayEl.removeChild(this.wordDisplayEl.firstChild);
+        }
+        
+        const wordLength = this.secretWord.length;
+        const letterSpacing = 0.4;
+        const totalWidth = wordLength * letterSpacing;
+        const startX = -totalWidth / 2 + (letterSpacing / 2);
+        
+        for (let i = 0; i < wordLength; i++) {
+          const letterContainer = document.createElement('a-entity');
+          letterContainer.setAttribute('position', `${startX + i * letterSpacing} 0 0`);
+          
+          // Letter background
+          const letterBg = document.createElement('a-plane');
+          letterBg.setAttribute('width', '0.35');
+          letterBg.setAttribute('height', '0.35');
+          letterBg.setAttribute('color', '#1A1A1A');
+          letterBg.setAttribute('material', 'transparent: true; opacity: 0.8');
+          letterBg.setAttribute('position', '0 0 -0.01');
+          
+          // Letter text
+          const letterEl = document.createElement('a-text');
+          letterEl.setAttribute('value', '_');
+          letterEl.setAttribute('align', 'center');
+          letterEl.setAttribute('width', '6');
+          letterEl.setAttribute('color', '#FFFFFF');
+          letterEl.setAttribute('material', 'emissive: #FFFFFF; emissiveIntensity: 0.1');
+          letterEl.setAttribute('position', '0 0 0');
+          
+          letterContainer.appendChild(letterBg);
+          letterContainer.appendChild(letterEl);
+          this.wordDisplayEl.appendChild(letterContainer);
+        }
+      },
+      
+      resetKeyboard: function () {
+        const buttons = this.keyboardEl.querySelectorAll('.keyboard-button');
+        buttons.forEach(button => {
+          // Reset visual state
+          button.setAttribute('color', '#2C3E50');
+          button.setAttribute('material', 'roughness: 0.3; metalness: 0.8; emissive: #1A1A1A; emissiveIntensity: 0.1');
+          
+          // Restore animations
+          button.setAttribute('animation__hoveron', 'property: material.emissiveIntensity; to: 0.4; startEvents: mouseenter; dur: 200');
+          button.setAttribute('animation__hoveroff', 'property: material.emissiveIntensity; to: 0.1; startEvents: mouseleave; dur: 200');
+          button.setAttribute('animation__clickscale', 'property: scale; to: 0.9 0.9 0.9; startEvents: mousedown; dur: 100; dir: alternate; loop: 2');
+          button.setAttribute('animation__clickglow', 'property: material.emissiveIntensity; to: 0.8; startEvents: mousedown; dur: 100; dir: alternate; loop: 2');
+          
+          // Reset text
+          const textEl = button.querySelector('a-text');
+          if (textEl) {
+            textEl.setAttribute('color', '#FFFFFF');
+            textEl.setAttribute('material', 'emissive: #FFFFFF; emissiveIntensity: 0.2');
+          }
+          
+          // Reset frame
+          const frameEl = button.querySelector('a-ring');
+          if (frameEl) {
+            frameEl.setAttribute('material', 'emissive: #FFD700; emissiveIntensity: 0.3; transparent: true; opacity: 0.8');
+          }
+        });
+      },
+      
+      hideAllHangmanParts: function () {
+        this.hangmanParts.forEach(part => {
+          if (part) part.setAttribute('visible', 'false');
+        });
+      },
+      
+      updateGameState: function (state) {
+        switch (state) {
+          case 'welcome':
+            this.statusMessageEl.setAttribute('value', 'Welcome to The Enchanted Hangman!');
+            this.resetButtonTextEl.setAttribute('value', 'START THE ENCHANTMENT');
+            break;
+            
+          case 'playing':
+            this.statusMessageEl.setAttribute('value', 'Cast your spell by guessing a letter!');
+            break;
+            
+          case 'correct':
+            this.statusMessageEl.setAttribute('value', 'Excellent magic! Keep casting!');
+            break;
+            
+          case 'incorrect':
+            const remaining = this.maxGuesses - this.incorrectGuesses;
+            this.statusMessageEl.setAttribute('value', `The dark magic grows... ${remaining} chances remain!`);
+            break;
+        }
+      },
+      
+      endGame: function (didWin) {
+        this.gameActive = false;
+        
+        if (didWin) {
+          this.statusMessageEl.setAttribute('value', 'ENCHANTMENT SUCCESSFUL! You saved the realm!');
+          this.sounds.victory.components.sound.playSound();
+          this.createVictoryEffects();
+        } else {
+          this.statusMessageEl.setAttribute('value', `The spell failed... The word was: ${this.secretWord}`);
+          this.sounds.defeat.components.sound.playSound();
+          this.revealCompleteWord();
+          this.createDefeatEffects();
+        }
+        
+        // Show reset button
+        setTimeout(() => {
+          this.keyboardEl.setAttribute('visible', 'false');
+          this.resetButtonContainerEl.setAttribute('visible', 'true');
+          this.resetButtonTextEl.setAttribute('value', 'CAST ANOTHER SPELL?');
+        }, 2000);
+      },
+      
+      revealCompleteWord: function () {
+        const letterElements = this.wordDisplayEl.children;
+        for (let i = 0; i < this.secretWord.length; i++) {
+          const letterEl = letterElements[i].querySelector('a-text');
+          if (letterEl) {
+            letterEl.setAttribute('value', this.secretWord[i]);
+            letterEl.setAttribute('material', 'color: #FF6B6B; emissive: #FF6B6B; emissiveIntensity: 0.3');
+          }
+        }
+      },
+      
+      createVictoryEffects: function () {
+        // Victory particles and light show
+        for (let i = 0; i < 20; i++) {
+          setTimeout(() => {
+            const particle = document.createElement('a-sphere');
+            particle.setAttribute('radius', '0.05');
+            particle.setAttribute('color', '#FFD700');
+            particle.setAttribute('material', 'emissive: #FFD700; emissiveIntensity: 0.8');
+            particle.setAttribute('position', `${(Math.random() - 0.5) * 4} ${2 + Math.random() * 2} ${-3 + (Math.random() - 0.5) * 2}`);
+            particle.setAttribute('animation__float', 'property: position; to: 0 6 -3; dur: 3000; easing: easeOutQuad');
+            particle.setAttribute('animation__fade', 'property: material.opacity; from: 1; to: 0; dur: 3000; easing: easeOutQuad');
+            
+            this.el.appendChild(particle);
+            
+            setTimeout(() => {
+              if (particle.parentNode) {
+                this.el.removeChild(particle);
+              }
+            }, 3500);
+          }, i * 100);
+        }
+      },
+      
+      createDefeatEffects: function () {
+        // Defeat atmosphere effects
+        const darkOverlay = document.createElement('a-sphere');
+        darkOverlay.setAttribute('radius', '10');
+        darkOverlay.setAttribute('position', '0 2 -3');
+        darkOverlay.setAttribute('material', 'color: #000000; transparent: true; opacity: 0; side: back');
+        darkOverlay.setAttribute('animation__darken', 'property: material.opacity; to: 0.3; dur: 2000; easing: easeInQuad');
+        
+        this.el.appendChild(darkOverlay);
+        
+        setTimeout(() => {
+          if (darkOverlay.parentNode) {
+            this.el.removeChild(darkOverlay);
+          }
+        }, 5000);
+      }
+    });
+    </script>
+  </body>
+</html>
